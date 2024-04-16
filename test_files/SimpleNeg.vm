@@ -1,0 +1,4 @@
+
+// Pushes and negates one constant
+push constant 7
+neg

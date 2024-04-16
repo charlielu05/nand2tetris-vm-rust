@@ -1,0 +1,4 @@
+// Pushes and applies AND on two constants
+push constant 1
+push constant 0 
+and
