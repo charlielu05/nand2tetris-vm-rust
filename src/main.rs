@@ -93,6 +93,7 @@ impl Parser {
 struct CodeWriter<'a> {
     output_file: File,
     mem_offset_map: &'a HashMap<MemoryLocation, i16>,
+    state: i16,
 }
 
 impl<'a> CodeWriter<'a> {
@@ -158,6 +159,8 @@ impl<'a> CodeWriter<'a> {
             "add" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D+M", "M=D",
+                    // SP + 1
+                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -165,6 +168,8 @@ impl<'a> CodeWriter<'a> {
             "sub" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D-M", "M=D",
+                    // SP + 1
+                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -172,16 +177,122 @@ impl<'a> CodeWriter<'a> {
             "neg" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M", "D=-D", "M=D",
+                    // SP + 1
+                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
             }
-            "eq" => Ok(()),
-            "gt" => Ok(()),
-            "lt" => Ok(()),
+            "eq" => {
+                self.write_lines(vec![
+                    "@SP",
+                    "M=M-1",
+                    "@SP",
+                    "A=M",
+                    "D=M",
+                    "@SP",
+                    "A=M-1",
+                    "D=M-D",
+                    &format!("@TRUE_{}", &self.state),
+                    "D;JEQ",
+                    // false
+                    "@SP",
+                    "M=M-1",
+                    "A=M",
+                    "M=-1",
+                    &format!("@CONTINUE_{}", &self.state),
+                    "0;JMP",
+                    &format!("(TRUE_{})", &self.state),
+                    // true
+                    "@SP",
+                    "M=M-1",
+                    "A=M",
+                    "M=0",
+                    &format!("(CONTINUE_{})", &self.state),
+                    // SP + 1
+                    "@SP",
+                    "M=M+1",
+                ])
+                .expect("error");
+                // increment the state counter to keep the labels unique
+                self.state += 1;
+                Ok(())
+            }
+            "gt" => {
+                self.write_lines(vec![
+                    "@SP",
+                    "M=M-1",
+                    "@SP",
+                    "A=M",
+                    "D=M",
+                    "@SP",
+                    "A=M-1",
+                    "D=M-D",
+                    &format!("@TRUE_{}", &self.state),
+                    "D;JGT",
+                    // false
+                    "@SP",
+                    "M=M-1",
+                    "A=M",
+                    "M=-1",
+                    &format!("@CONTINUE_{}", &self.state),
+                    "0;JMP",
+                    &format!("(TRUE_{})", &self.state),
+                    // true
+                    "@SP",
+                    "M=M-1",
+                    "A=M",
+                    "M=0",
+                    &format!("(CONTINUE_{})", &self.state),
+                    // SP + 1
+                    "@SP",
+                    "M=M+1",
+                ])
+                .expect("error");
+                // increment the state counter to keep the labels unique
+                self.state += 1;
+                Ok(())
+            }
+            "lt" => {
+                self.write_lines(vec![
+                    "@SP",
+                    "M=M-1",
+                    "@SP",
+                    "A=M",
+                    "D=M",
+                    "@SP",
+                    "A=M-1",
+                    "D=D-M",
+                    &format!("@TRUE_{}", &self.state),
+                    "D;JGT",
+                    // false
+                    "@SP",
+                    "M=M-1",
+                    "A=M",
+                    "M=-1",
+                    &format!("@CONTINUE_{}", &self.state),
+                    "0;JMP",
+                    &format!("(TRUE_{})", &self.state),
+                    // true
+                    "@SP",
+                    "M=M-1",
+                    "A=M",
+                    "M=0",
+                    &format!("(CONTINUE_{})", &self.state),
+                    // SP + 1
+                    "@SP",
+                    "M=M+1",
+                ])
+                .expect("error");
+                // increment the state counter to keep the labels unique
+                self.state += 1;
+                Ok(())
+            }
             "and" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D&M", "M=D",
+                    // SP + 1
+                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -189,6 +300,8 @@ impl<'a> CodeWriter<'a> {
             "or" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D|M", "M=D",
+                    // SP + 1
+                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -196,6 +309,8 @@ impl<'a> CodeWriter<'a> {
             "not" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M", "D=!D", "M=D",
+                    // SP + 1
+                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -257,6 +372,7 @@ fn main() {
     let mut code_writer = CodeWriter {
         output_file: f,
         mem_offset_map: &mem_offset_map,
+        state: 0,
     };
 
     code_writer.init_stack();

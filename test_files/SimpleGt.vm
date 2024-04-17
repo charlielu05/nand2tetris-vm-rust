@@ -1,0 +1,5 @@
+// Pushes and applies gt on two constants
+// should be true (0) instead of false (-1)
+push constant 3
+push constant 4
+gt

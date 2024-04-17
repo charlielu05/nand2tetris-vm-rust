@@ -1,0 +1,8 @@
+// Pushes and applies eq on two constants
+// true (0) & false (-1)
+push constant 3
+push constant 3
+eq
+push constant 4
+push constant 1
+eq 
