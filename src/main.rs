@@ -104,39 +104,47 @@ impl<'a> CodeWriter<'a> {
         Ok(())
     }
 
-    fn init_stack(&mut self) {
-        writeln!(
-            self.output_file,
-            "@{}",
-            self.mem_offset_map
+    fn write_address(&mut self, segment: &str) {
+        writeln!(self.output_file, "//setting up {} address", segment).unwrap();
+
+        let mem_location = match segment {
+            "SP" => Ok(self
+                .mem_offset_map
                 .get(&MemoryLocation::Stack)
-                .expect("wrong key")
-        )
-        .unwrap();
+                .expect("wrong key")),
+            "LCL" => Ok(self
+                .mem_offset_map
+                .get(&MemoryLocation::Local)
+                .expect("wrong key")),
+            "ARG" => Ok(self
+                .mem_offset_map
+                .get(&MemoryLocation::Argument)
+                .expect("wrong key")),
+            _ => Err(()),
+        };
+
+        writeln!(self.output_file, "@{}", mem_location.unwrap()).unwrap();
         writeln!(self.output_file, "D=A").unwrap();
-        writeln!(self.output_file, "@SP").unwrap();
+        writeln!(self.output_file, "@{}", segment).unwrap();
         writeln!(self.output_file, "M=D").unwrap();
+    }
+
+    fn init_stack(&mut self) {
+        self.write_address("SP");
+        self.write_address("LCL");
+        self.write_address("ARG")
     }
 
     fn write_push_pop(&mut self, command: &str, segment: &str, index: &i16) -> Result<(), &str> {
         // segment is a memory location, segment + index = actual memory location
-        let offset = match segment {
-            "constant" => 0,
-            "argument" => 1,
-            "local" => 2,
-            "static" => 3,
-            "this" => 4,
-            "pointer" => 256,
-            "index" => 6,
-            _ => -1,
-        };
-
+        // stack memory is from 256 - 2047
+        // stack memory is shared so we need to allocate sufficient space for each offset
         match command {
             "C_PUSH" => match segment {
                 "constant" => {
-                    let address = index;
                     self.write_lines(vec![
-                        &format!("@{}", address),
+                        "// push constant",
+                        &format!("@{}", index),
                         "D=A",
                         "@SP",
                         "A=M",
@@ -147,6 +155,29 @@ impl<'a> CodeWriter<'a> {
                     .expect("error");
                     Ok(())
                 }
+                "argument" => {
+                    self.write_lines(vec![
+                        "//push argument",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@ARG",
+                        "A=M+D",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "local" => Ok(()),
+                "static" => Ok(()),
+                "this" => Ok(()),
+                "that" => Ok(()),
+                "temp" => Ok(()),
                 _ => Err("not implemented"),
             },
             // "C_POP" => {}
@@ -329,6 +360,7 @@ enum MemoryLocation {
     Local,
     Static,
     This,
+    That,
     Pointer,
     Index,
     Stack,
@@ -337,10 +369,11 @@ enum MemoryLocation {
 fn main() {
     let mem_offset_map: HashMap<MemoryLocation, i16> = HashMap::from([
         (MemoryLocation::Constant, 0),
-        (MemoryLocation::Argument, 1),
-        (MemoryLocation::Local, 2),
+        (MemoryLocation::Argument, 756),
+        (MemoryLocation::Local, 456),
         (MemoryLocation::Static, 3),
-        (MemoryLocation::This, 4),
+        (MemoryLocation::This, 1056),
+        (MemoryLocation::That, 1356),
         (MemoryLocation::Pointer, 5),
         (MemoryLocation::Index, 6),
         (MemoryLocation::Stack, 256),

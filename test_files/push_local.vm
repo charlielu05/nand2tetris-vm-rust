@@ -1,0 +1,5 @@
+// tests push argument
+// we first set memory location for LOCAL (456 + 10) to 42
+// then we want to push that value to the stack
+
+push local 10
