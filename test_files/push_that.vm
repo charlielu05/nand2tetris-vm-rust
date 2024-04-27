@@ -1,0 +1,5 @@
+// tests push that
+// we first set memory location for THAT (1356 + 10) to 42 manually
+// then we want to push that value to the stack
+
+push that 10

@@ -1,0 +1,5 @@
+// tests push this
+// we first set memory location for THIS (1056 + 10) to 42 manually
+// then we want to push that value to the stack
+
+push this 10

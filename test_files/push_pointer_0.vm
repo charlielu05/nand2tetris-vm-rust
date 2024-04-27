@@ -1,0 +1,5 @@
+// tests push pointer 0 (THIS register)
+// we first set memory location for THIS (1056) to 42
+// then we want to push that value to the stack
+
+push pointer 0

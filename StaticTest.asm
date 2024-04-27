@@ -1,0 +1,73 @@
+// push constant
+@111
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push constant
+@333
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push constant
+@888
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//push static
+@StaticTest.3
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//push static
+@StaticTest.1
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+A=M-1
+D=D-M
+M=D
+@SP
+M=M+1
+//push static
+@StaticTest.8
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+A=M-1
+D=D+M
+M=D
+@SP
+M=M+1

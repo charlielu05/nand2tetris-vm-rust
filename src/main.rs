@@ -2,6 +2,7 @@ use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::env;
+use std::error::Error;
 use std::fs::{read_to_string, File};
 use std::io::{self, ErrorKind, Write};
 use std::io::{BufRead, BufReader};
@@ -21,6 +22,25 @@ fn read_lines(filename: &str) -> Vec<String> {
         .map(String::from)
         .map(|line| line.trim().to_string())
         .collect()
+}
+
+struct VmFile {
+    file: File,
+    name: String,
+}
+
+impl VmFile {
+    fn new(filename: &str) -> Result<VmFile, std::io::Error> {
+        let file = File::create(format!("{}.asm", filename))?;
+        Ok(VmFile {
+            file,
+            name: filename.to_string(),
+        })
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 struct Parser {
@@ -91,7 +111,7 @@ impl Parser {
 }
 
 struct CodeWriter<'a> {
-    output_file: File,
+    output_file: VmFile,
     mem_offset_map: &'a HashMap<MemoryLocation, i16>,
     state: i16,
 }
@@ -99,13 +119,13 @@ struct CodeWriter<'a> {
 impl<'a> CodeWriter<'a> {
     fn write_lines(&mut self, lines: Vec<&str>) -> std::io::Result<()> {
         for line in lines {
-            writeln!(self.output_file, "{}", line)?;
+            writeln!(self.output_file.file, "{}", line)?;
         }
         Ok(())
     }
 
     fn write_address(&mut self, segment: &str) {
-        writeln!(self.output_file, "//setting up {} address", segment).unwrap();
+        writeln!(self.output_file.file, "//setting up {} address", segment).unwrap();
 
         let mem_location = match segment {
             "SP" => Ok(self
@@ -120,19 +140,29 @@ impl<'a> CodeWriter<'a> {
                 .mem_offset_map
                 .get(&MemoryLocation::Argument)
                 .expect("wrong key")),
+            "THIS" => Ok(self
+                .mem_offset_map
+                .get(&MemoryLocation::This)
+                .expect("wrong key")),
+            "THAT" => Ok(self
+                .mem_offset_map
+                .get(&MemoryLocation::That)
+                .expect("wrong key")),
             _ => Err(()),
         };
 
-        writeln!(self.output_file, "@{}", mem_location.unwrap()).unwrap();
-        writeln!(self.output_file, "D=A").unwrap();
-        writeln!(self.output_file, "@{}", segment).unwrap();
-        writeln!(self.output_file, "M=D").unwrap();
+        writeln!(self.output_file.file, "@{}", mem_location.unwrap()).unwrap();
+        writeln!(self.output_file.file, "D=A").unwrap();
+        writeln!(self.output_file.file, "@{}", segment).unwrap();
+        writeln!(self.output_file.file, "M=D").unwrap();
     }
 
     fn init_stack(&mut self) {
         self.write_address("SP");
         self.write_address("LCL");
-        self.write_address("ARG")
+        self.write_address("ARG");
+        self.write_address("THIS");
+        self.write_address("THAT")
     }
 
     fn write_push_pop(&mut self, command: &str, segment: &str, index: &i16) -> Result<(), &str> {
@@ -173,11 +203,118 @@ impl<'a> CodeWriter<'a> {
                     .expect("error");
                     Ok(())
                 }
-                "local" => Ok(()),
-                "static" => Ok(()),
-                "this" => Ok(()),
-                "that" => Ok(()),
-                "temp" => Ok(()),
+                "local" => {
+                    self.write_lines(vec![
+                        "//push local",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@LCL",
+                        "A=M+D",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "static" => {
+                    self.write_lines(vec![
+                        "//push static",
+                        &format!("@{}.{}", &self.output_file.name, index),
+                        "A=M",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "this" => {
+                    self.write_lines(vec![
+                        "//push this",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@THIS",
+                        "A=M+D",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "that" => {
+                    self.write_lines(vec![
+                        "//push that",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@THAT",
+                        "A=M+D",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "temp" => {
+                    self.write_lines(vec![
+                        "//push temp",
+                        &format!("@{}", index),
+                        "D=A",
+                        // TEMP starts at RAM[5]
+                        "@5",
+                        "A=A+D",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "pointer" => {
+                    // pointer 0 is THIS, pointer 1 is THAT
+                    let address = match index {
+                        0 => Ok("THIS"),
+                        1 => Ok("THAT"),
+                        _ => Err("invalid"),
+                    };
+
+                    self.write_lines(vec![
+                        "//push pointer",
+                        &format!("@{}", address?),
+                        "A=M",
+                        "D=M",
+                        "@SP",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
                 _ => Err("not implemented"),
             },
             // "C_POP" => {}
@@ -350,7 +487,7 @@ impl<'a> CodeWriter<'a> {
         }
     }
     fn close(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.output_file.sync_all().map_err(|e| e.into())
+        self.output_file.file.sync_all().map_err(|e| e.into())
     }
 }
 #[derive(Hash, Eq, PartialEq, Debug)]
@@ -366,49 +503,11 @@ enum MemoryLocation {
     Stack,
 }
 
-fn main() {
-    let mem_offset_map: HashMap<MemoryLocation, i16> = HashMap::from([
-        (MemoryLocation::Constant, 0),
-        (MemoryLocation::Argument, 756),
-        (MemoryLocation::Local, 456),
-        (MemoryLocation::Static, 3),
-        (MemoryLocation::This, 1056),
-        (MemoryLocation::That, 1356),
-        (MemoryLocation::Pointer, 5),
-        (MemoryLocation::Index, 6),
-        (MemoryLocation::Stack, 256),
-    ]);
-
-    let args: Vec<String> = env::args().collect();
-    // dbg!(&args);
-
-    let filepath = parse_filename(&args).unwrap_or_else(|err| {
-        println!("{}", err);
-        std::process::exit(1);
-    });
-
-    let filename = Path::new(filepath).file_stem().unwrap().to_str().unwrap();
-    println!("Creating Virtual Machine bytecode file: {:?}", filename);
-
-    let lines = read_lines(filepath);
-
-    //
-    let mut parser = Parser {
-        contents: lines,
-        currentLine: 0,
-        currentInstruction: "".to_string(),
-    };
-
-    // write to file
-    let f = File::create(format!("{}.asm", filename)).expect("failed...");
-
-    let mut code_writer = CodeWriter {
-        output_file: f,
-        mem_offset_map: &mem_offset_map,
-        state: 0,
-    };
-
-    code_writer.init_stack();
+fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bool) {
+    // initialize the memory base address if we are testing/debugging
+    if test {
+        code_writer.init_stack();
+    }
 
     while parser.hasMoreLines() {
         parser.advance();
@@ -435,4 +534,49 @@ fn main() {
             }
         }
     }
+}
+fn main() {
+    let mem_offset_map: HashMap<MemoryLocation, i16> = HashMap::from([
+        (MemoryLocation::Constant, 0),
+        (MemoryLocation::Argument, 756),
+        (MemoryLocation::Local, 456),
+        (MemoryLocation::Static, 3),
+        (MemoryLocation::This, 1056),
+        (MemoryLocation::That, 1356),
+        (MemoryLocation::Pointer, 5),
+        (MemoryLocation::Index, 6),
+        (MemoryLocation::Stack, 256),
+    ]);
+
+    let args: Vec<String> = env::args().collect();
+    // dbg!(&args);
+
+    let filepath = parse_filename(&args).unwrap_or_else(|err| {
+        println!("{}", err);
+        std::process::exit(1);
+    });
+
+    let filename = Path::new(filepath).file_stem().unwrap().to_str().unwrap();
+    println!("Creating Virtual Machine bytecode file: {:?}", filename);
+
+    let lines = read_lines(filepath);
+
+    let parser = Parser {
+        contents: lines,
+        currentLine: 0,
+        currentInstruction: "".to_string(),
+    };
+
+    // write to file
+    let file = VmFile::new(filename).unwrap();
+
+    let code_writer = CodeWriter {
+        output_file: file,
+        mem_offset_map: &mem_offset_map,
+        state: 0,
+    };
+
+    let test = false;
+
+    compile_vm_code(parser, code_writer, test)
 }

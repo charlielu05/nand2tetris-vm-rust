@@ -14,3 +14,23 @@ D=A
 @ARG
 M=D
 //setting up THIS address
+@1056
+D=A
+@THIS
+M=D
+//setting up THAT address
+@1356
+D=A
+@THAT
+M=D
+//push this
+@10
+D=A
+@THIS
+A=M+D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1

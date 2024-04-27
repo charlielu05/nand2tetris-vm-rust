@@ -1,0 +1,5 @@
+// tests push temp
+// we first set memory location for TEMP (5) to 42
+// then we want to push that value to the stack
+
+push temp 0
