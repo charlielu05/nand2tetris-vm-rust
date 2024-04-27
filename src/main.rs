@@ -317,7 +317,39 @@ impl<'a> CodeWriter<'a> {
                 }
                 _ => Err("not implemented"),
             },
-            // "C_POP" => {}
+            "C_POP" => match segment {
+                "argument" => {
+                    self.write_lines(vec![
+                        "// pop argument",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@ARG",
+                        "// arg address + index",
+                        "D=M+D",
+                        "// save to temp register",
+                        "@R13",
+                        "M=D",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        "// save to arg address stored in temp register",
+                        "@R13",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "local" => Ok(()),
+                _ => Err("not implemented"),
+            },
             _ => Ok(()),
         }
     }
@@ -520,13 +552,21 @@ fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bool) 
                 "C_PUSH" => {
                     code_writer
                         .write_push_pop(
-                            "C_PUSH",
+                            cmd,
                             &parser.arg1().expect("error"),
                             &parser.arg2().expect("error").parse().unwrap(),
                         )
                         .expect("error");
                 }
-                "C_POP" => {}
+                "C_POP" => {
+                    code_writer
+                        .write_push_pop(
+                            cmd,
+                            &parser.arg1().expect("error"),
+                            &parser.arg2().expect("error").parse().unwrap(),
+                        )
+                        .expect("error");
+                }
                 "C_ARITHMETIC" => code_writer
                     .write_arithmetic(&parser.arg1().expect("error"))
                     .expect("error"),
@@ -576,7 +616,7 @@ fn main() {
         state: 0,
     };
 
-    let test = false;
+    let test = true;
 
     compile_vm_code(parser, code_writer, test)
 }

@@ -1,0 +1,5 @@
+// tests pop argument
+// we first set the stack pointer address memory value to 42 (255)
+// then we want to pop that value to argument index 10 (756 + 10) = 766
+
+pop argument 10
