@@ -1,0 +1,5 @@
+// tests pop pointer 1 (THAT register)
+// first set the initial stack value to 42 (255)
+// then we want to push that value to the pointer 1 (THAT) which is at 1356
+
+pop pointer 1

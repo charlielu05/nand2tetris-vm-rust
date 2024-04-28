@@ -1,0 +1,5 @@
+// tests pop temp
+// we first set memory location for initial STACK (255) to 42
+// then we want to push that value to TEMP 7 (5 + 7)=12
+
+pop temp 7

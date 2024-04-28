@@ -1,0 +1,5 @@
+// tests pop local
+// we first set the stack pointer address memory value to 42 (255)
+// then we want to pop that value to local index 10 (456 + 10) = 466
+
+pop local 10

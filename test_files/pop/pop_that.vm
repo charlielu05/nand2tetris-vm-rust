@@ -1,0 +1,5 @@
+// tests pop that
+// we first set the stack pointer address memory value to 42 (255)
+// then we want to pop that value to THAT index 10 (1356 + 10) = 1366
+
+pop that 10

@@ -1,0 +1,5 @@
+// tests pop this
+// we first set the stack pointer address memory value to 42 (255)
+// then we want to pop that value to THIS index 10 (1056 + 10) = 1066
+
+pop this 10

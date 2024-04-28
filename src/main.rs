@@ -347,7 +347,170 @@ impl<'a> CodeWriter<'a> {
                     .expect("error");
                     Ok(())
                 }
-                "local" => Ok(()),
+                "local" => {
+                    self.write_lines(vec![
+                        "// pop local",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@LCL",
+                        "// LCL address + index",
+                        "D=M+D",
+                        "// save to temp register",
+                        "@R13",
+                        "M=D",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        "// save to LCL address stored in temp register",
+                        "@R13",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "this" => {
+                    self.write_lines(vec![
+                        "// pop this",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@THIS",
+                        "// THIS address + index",
+                        "D=M+D",
+                        "// save to temp register",
+                        "@R13",
+                        "M=D",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        "// save to THIS address stored in temp register",
+                        "@R13",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "that" => {
+                    self.write_lines(vec![
+                        "// pop that",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        &format!("@{}", index),
+                        "D=A",
+                        "@THAT",
+                        "// THAT address + index",
+                        "D=M+D",
+                        "// save to temp register",
+                        "@R13",
+                        "M=D",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        "// save to THAT address stored in temp register",
+                        "@R13",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "static" => {
+                    self.write_lines(vec![
+                        "//pop static",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        &format!("@{}.{}", &self.output_file.name, index),
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "temp" => {
+                    self.write_lines(vec![
+                        "//pop temp",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        &format!("@{}", index),
+                        "D=A",
+                        // TEMP starts at RAM[5]
+                        "@5",
+                        "// temp address + index",
+                        "D=A+D",
+                        "// save to temp register",
+                        "@R13",
+                        "M=D",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        "// save to arg address stored in temp register",
+                        "@R13",
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
+                "pointer" => {
+                    // pointer 0 is THIS, pointer 1 is THAT
+                    let address = match index {
+                        0 => Ok("THIS"),
+                        1 => Ok("THAT"),
+                        _ => Err("invalid"),
+                    };
+
+                    self.write_lines(vec![
+                        "//pop pointer",
+                        "// decrement stack pointer",
+                        "@SP",
+                        "M=M-1",
+                        "// get value of stack pointer",
+                        "@SP",
+                        "A=M",
+                        "D=M",
+                        &format!("@{}", address?),
+                        "A=M",
+                        "M=D",
+                        // increment SP
+                        "@SP",
+                        "M=M+1",
+                    ])
+                    .expect("error");
+                    Ok(())
+                }
                 _ => Err("not implemented"),
             },
             _ => Ok(()),

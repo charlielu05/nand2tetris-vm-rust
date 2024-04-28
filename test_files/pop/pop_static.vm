@@ -1,0 +1,6 @@
+// tests pop static
+// we first set memoy location for STATIC (16) to 20
+// set stack pointer value to 42 (255)
+// then we want to pop that value to the static memory (20)
+
+pop static 555
