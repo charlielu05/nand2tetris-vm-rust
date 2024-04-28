@@ -1,11 +1,9 @@
-use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs::{read_to_string, File};
-use std::io::{self, ErrorKind, Write};
-use std::io::{BufRead, BufReader};
+use std::io::{ErrorKind, Write};
 use std::path::Path;
 
 fn parse_filename(configs: &[String]) -> Result<&String, &'static str> {
@@ -224,8 +222,7 @@ impl<'a> CodeWriter<'a> {
                 "static" => {
                     self.write_lines(vec![
                         "//push static",
-                        &format!("@{}.{}", &self.output_file.name, index),
-                        "A=M",
+                        &format!("@{}.{}", &self.output_file.name(), index),
                         "D=M",
                         "@SP",
                         "A=M",
@@ -444,12 +441,8 @@ impl<'a> CodeWriter<'a> {
                         "@SP",
                         "A=M",
                         "D=M",
-                        &format!("@{}.{}", &self.output_file.name, index),
-                        "A=M",
+                        &format!("@{}.{}", &self.output_file.name(), index),
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -530,9 +523,7 @@ impl<'a> CodeWriter<'a> {
             }
             "sub" => {
                 self.write_lines(vec![
-                    "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D-M", "M=D",
-                    // SP + 1
-                    "@SP", "M=M+1",
+                    "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=M-D", "M=D",
                 ])
                 .expect("error");
                 Ok(())
@@ -779,7 +770,13 @@ fn main() {
         state: 0,
     };
 
-    let test = true;
+    let test = {
+        if args[2] == "true".to_string() {
+            true
+        } else {
+            false
+        }
+    };
 
     compile_vm_code(parser, code_writer, test)
 }

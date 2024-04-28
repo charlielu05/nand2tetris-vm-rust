@@ -1,6 +1,5 @@
 // tests pop static
-// we first set memoy location for STATIC (16) to 20
-// set stack pointer value to 42 (255)
-// then we want to pop that value to the static memory (20)
+// set initial stack value at MEM[255] to 42
+// then we want to pop that value to static register at MEM[16]
 
 pop static 555

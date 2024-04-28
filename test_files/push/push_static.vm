@@ -1,6 +1,5 @@
 // tests push static
-// we first set memoy location for STATIC (16) to 20
-// set register 20 to the value of 42
+// we first set value for STATIC (16) to 42
 // then we want to push that value to the stack
 
 push static 22

@@ -22,9 +22,38 @@ A=M
 M=D
 @SP
 M=M+1
+//pop static
+// decrement stack pointer
+@SP
+M=M-1
+// get value of stack pointer
+@SP
+A=M
+D=M
+@StaticTest.8
+M=D
+//pop static
+// decrement stack pointer
+@SP
+M=M-1
+// get value of stack pointer
+@SP
+A=M
+D=M
+@StaticTest.3
+M=D
+//pop static
+// decrement stack pointer
+@SP
+M=M-1
+// get value of stack pointer
+@SP
+A=M
+D=M
+@StaticTest.1
+M=D
 //push static
 @StaticTest.3
-A=M
 D=M
 @SP
 A=M
@@ -33,7 +62,6 @@ M=D
 M=M+1
 //push static
 @StaticTest.1
-A=M
 D=M
 @SP
 A=M
@@ -47,13 +75,10 @@ A=M
 D=M
 @SP
 A=M-1
-D=D-M
+D=M-D
 M=D
-@SP
-M=M+1
 //push static
 @StaticTest.8
-A=M
 D=M
 @SP
 A=M

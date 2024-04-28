@@ -25,7 +25,6 @@ D=A
 M=D
 //push static
 @push_static.22
-A=M
 D=M
 @SP
 A=M
