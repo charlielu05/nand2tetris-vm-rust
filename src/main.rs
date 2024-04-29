@@ -300,7 +300,6 @@ impl<'a> CodeWriter<'a> {
                     self.write_lines(vec![
                         "//push pointer",
                         &format!("@{}", address?),
-                        "A=M",
                         "D=M",
                         "@SP",
                         "A=M",
@@ -337,9 +336,6 @@ impl<'a> CodeWriter<'a> {
                         "@R13",
                         "A=M",
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -366,9 +362,6 @@ impl<'a> CodeWriter<'a> {
                         "@R13",
                         "A=M",
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -395,9 +388,6 @@ impl<'a> CodeWriter<'a> {
                         "@R13",
                         "A=M",
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -424,9 +414,6 @@ impl<'a> CodeWriter<'a> {
                         "@R13",
                         "A=M",
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -470,9 +457,6 @@ impl<'a> CodeWriter<'a> {
                         "@R13",
                         "A=M",
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -495,11 +479,7 @@ impl<'a> CodeWriter<'a> {
                         "A=M",
                         "D=M",
                         &format!("@{}", address?),
-                        "A=M",
                         "M=D",
-                        // increment SP
-                        "@SP",
-                        "M=M+1",
                     ])
                     .expect("error");
                     Ok(())
@@ -515,8 +495,6 @@ impl<'a> CodeWriter<'a> {
             "add" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D+M", "M=D",
-                    // SP + 1
-                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -553,7 +531,7 @@ impl<'a> CodeWriter<'a> {
                     "@SP",
                     "M=M-1",
                     "A=M",
-                    "M=-1",
+                    "M=0",
                     &format!("@CONTINUE_{}", &self.state),
                     "0;JMP",
                     &format!("(TRUE_{})", &self.state),
@@ -561,7 +539,7 @@ impl<'a> CodeWriter<'a> {
                     "@SP",
                     "M=M-1",
                     "A=M",
-                    "M=0",
+                    "M=-1",
                     &format!("(CONTINUE_{})", &self.state),
                     // SP + 1
                     "@SP",
@@ -588,7 +566,7 @@ impl<'a> CodeWriter<'a> {
                     "@SP",
                     "M=M-1",
                     "A=M",
-                    "M=-1",
+                    "M=0",
                     &format!("@CONTINUE_{}", &self.state),
                     "0;JMP",
                     &format!("(TRUE_{})", &self.state),
@@ -596,7 +574,7 @@ impl<'a> CodeWriter<'a> {
                     "@SP",
                     "M=M-1",
                     "A=M",
-                    "M=0",
+                    "M=-1",
                     &format!("(CONTINUE_{})", &self.state),
                     // SP + 1
                     "@SP",
@@ -623,7 +601,7 @@ impl<'a> CodeWriter<'a> {
                     "@SP",
                     "M=M-1",
                     "A=M",
-                    "M=-1",
+                    "M=0",
                     &format!("@CONTINUE_{}", &self.state),
                     "0;JMP",
                     &format!("(TRUE_{})", &self.state),
@@ -631,7 +609,7 @@ impl<'a> CodeWriter<'a> {
                     "@SP",
                     "M=M-1",
                     "A=M",
-                    "M=0",
+                    "M=-1",
                     &format!("(CONTINUE_{})", &self.state),
                     // SP + 1
                     "@SP",
@@ -645,8 +623,6 @@ impl<'a> CodeWriter<'a> {
             "and" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D&M", "M=D",
-                    // SP + 1
-                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
@@ -654,19 +630,13 @@ impl<'a> CodeWriter<'a> {
             "or" => {
                 self.write_lines(vec![
                     "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D|M", "M=D",
-                    // SP + 1
-                    "@SP", "M=M+1",
                 ])
                 .expect("error");
                 Ok(())
             }
             "not" => {
-                self.write_lines(vec![
-                    "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M", "D=!D", "M=D",
-                    // SP + 1
-                    "@SP", "M=M+1",
-                ])
-                .expect("error");
+                self.write_lines(vec!["@SP", "A=M-1", "M=!M"])
+                    .expect("error");
                 Ok(())
             }
             _ => Err(ErrorKind::InvalidInput),

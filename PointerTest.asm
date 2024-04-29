@@ -15,10 +15,7 @@ M=M-1
 A=M
 D=M
 @THIS
-A=M
 M=D
-@SP
-M=M+1
 // push constant
 @3040
 D=A
@@ -36,10 +33,7 @@ M=M-1
 A=M
 D=M
 @THAT
-A=M
 M=D
-@SP
-M=M+1
 // push constant
 @32
 D=A
@@ -68,8 +62,6 @@ D=M
 @R13
 A=M
 M=D
-@SP
-M=M+1
 // push constant
 @46
 D=A
@@ -98,11 +90,8 @@ D=M
 @R13
 A=M
 M=D
-@SP
-M=M+1
 //push pointer
 @THIS
-A=M
 D=M
 @SP
 A=M
@@ -111,7 +100,6 @@ M=D
 M=M+1
 //push pointer
 @THAT
-A=M
 D=M
 @SP
 A=M
@@ -127,8 +115,6 @@ D=M
 A=M-1
 D=D+M
 M=D
-@SP
-M=M+1
 //push this
 @2
 D=A
@@ -169,5 +155,3 @@ D=M
 A=M-1
 D=D+M
 M=D
-@SP
-M=M+1
