@@ -46,6 +46,14 @@ pub struct Parser {
 }
 
 impl Parser {
+    pub fn new(code_lines:Vec<String>, current_line:usize)->Self{
+        Parser {
+            contents: code_lines,
+            currentLine: current_line,
+            currentInstruction: "".to_string(),
+        }
+    }
+
     fn hasMoreLines(&self) -> bool {
         self.currentLine < self.contents.len() - 1 
     }
@@ -102,13 +110,40 @@ impl Parser {
     }
 }
 
-pub struct CodeWriter<'a> {
+pub struct CodeWriter {
     pub output_file: VmFile,
-    pub mem_offset_map: &'a HashMap<MemoryLocation, i16>,
+    pub mem_offset_map: Option<HashMap<MemoryLocation, i16>>,
     pub state: i16,
 }
 
-impl<'a> CodeWriter<'a> {
+impl CodeWriter {
+    pub fn new(file: VmFile, is_test:bool)->Self {
+        if is_test {
+            let mem_offset_map: Option<HashMap<MemoryLocation, i16>> = Some(HashMap::from([
+                (MemoryLocation::Constant, 0),
+                (MemoryLocation::Argument, 756),
+                (MemoryLocation::Local, 456),
+                (MemoryLocation::Static, 3),
+                (MemoryLocation::This, 1056),
+                (MemoryLocation::That, 1356),
+                (MemoryLocation::Pointer, 5),
+                (MemoryLocation::Index, 6),
+                (MemoryLocation::Stack, 256),
+            ]));
+            return CodeWriter {
+                output_file: file,
+                mem_offset_map: mem_offset_map,
+                state: 0,
+            }}
+
+            else {
+                return CodeWriter {
+                    output_file: file,
+                    mem_offset_map: None,
+                    state: 0,
+                }};
+    }
+
     fn write_lines(&mut self, lines: Vec<&str>) -> std::io::Result<()> {
         for line in lines {
             writeln!(self.output_file.file, "{}", line)?;
@@ -121,23 +156,23 @@ impl<'a> CodeWriter<'a> {
 
         let mem_location = match segment {
             "SP" => Ok(self
-                .mem_offset_map
+                .mem_offset_map.as_ref().unwrap()
                 .get(&MemoryLocation::Stack)
                 .expect("wrong key")),
             "LCL" => Ok(self
-                .mem_offset_map
+                .mem_offset_map.as_ref().unwrap()
                 .get(&MemoryLocation::Local)
                 .expect("wrong key")),
             "ARG" => Ok(self
-                .mem_offset_map
+                .mem_offset_map.as_ref().unwrap()
                 .get(&MemoryLocation::Argument)
                 .expect("wrong key")),
             "THIS" => Ok(self
-                .mem_offset_map
+                .mem_offset_map.as_ref().unwrap()
                 .get(&MemoryLocation::This)
                 .expect("wrong key")),
             "THAT" => Ok(self
-                .mem_offset_map
+                .mem_offset_map.as_ref().unwrap()
                 .get(&MemoryLocation::That)
                 .expect("wrong key")),
             _ => Err(()),
