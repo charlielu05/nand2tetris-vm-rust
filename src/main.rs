@@ -1,22 +1,9 @@
-use std::collections::HashMap;
 use std::env;
 use std::path::Path;
-use hack_vm::{VmFile, MemoryLocation, Parser, CodeWriter};
-use hack_vm::{parse_filename, read_lines, compile_vm_code};
+use hack_vm::compiler::{VmFile, Parser, CodeWriter};
+use hack_vm::compiler::{parse_filename, read_lines, compile_vm_code};
 
 fn main() {
-    let mem_offset_map: HashMap<MemoryLocation, i16> = HashMap::from([
-        (MemoryLocation::Constant, 0),
-        (MemoryLocation::Argument, 756),
-        (MemoryLocation::Local, 456),
-        (MemoryLocation::Static, 3),
-        (MemoryLocation::This, 1056),
-        (MemoryLocation::That, 1356),
-        (MemoryLocation::Pointer, 5),
-        (MemoryLocation::Index, 6),
-        (MemoryLocation::Stack, 256),
-    ]);
-
     let args: Vec<String> = env::args().collect();
     // dbg!(&args);
 
@@ -36,7 +23,7 @@ fn main() {
     // initialise the file object
     let file = VmFile::new(filename).unwrap();
 
-    let parser = Parser::new(lines, 0);
+    let parser = Parser::new(lines);
 
     let code_writer = CodeWriter::new(file, is_test);
 
