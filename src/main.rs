@@ -1,11 +1,13 @@
+use hack_vm::compiler::{compile_vm_code, parse_filename, read_lines};
+use hack_vm::compiler::{CodeWriter, Parser, VmFile};
 use std::env;
 use std::path::Path;
-use hack_vm::compiler::{VmFile, Parser, CodeWriter};
-use hack_vm::compiler::{parse_filename, read_lines, compile_vm_code};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    // dbg!(&args);
+    if !args.len() == 2 {
+        panic!("two arguments required, filepath string and test boolean")
+    }
 
     let filepath = parse_filename(&args).unwrap_or_else(|err| {
         println!("{}", err);
@@ -17,7 +19,7 @@ fn main() {
 
     let is_test = matches!(args[2].as_str(), "test");
 
-    // read the code file 
+    // read the code file
     let lines = read_lines(filepath);
 
     // initialise the file object

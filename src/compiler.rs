@@ -28,43 +28,57 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(code_lines:Vec<String>)->Self{
-        Parser {
+    pub fn new(code_lines: Vec<String>) -> Self {
+        let mut new_parser = Parser {
             contents: code_lines,
             currentLine: 0,
             currentInstruction: "".to_string(),
-        }
+        };
+        // set the initial instruction
+        new_parser.advance();
+        new_parser
     }
 
     fn hasMoreLines(&self) -> bool {
-        self.currentLine < self.contents.len() - 1 
+        self.currentLine < self.contents.len() - 1
+    }
+
+    fn increment_line(&mut self) {
+        if self.hasMoreLines() {
+            self.currentLine += 1;
+        }
+    }
+    fn set_instruction(&mut self) {
+        self.currentInstruction = self.contents[self.currentLine].to_string();
     }
 
     pub fn advance(&mut self) {
-        if self.hasMoreLines() {
-            self.currentLine += 1;
-            if self.contents[self.currentLine].starts_with("//")
-                | self.contents[self.currentLine].is_empty()
-            {
-                self.advance();
-            } else {
-                self.currentInstruction = self.contents[self.currentLine].to_string();
-            }
+        if self.contents[self.currentLine].starts_with("//")
+            | self.contents[self.currentLine].is_empty()
+        {
+            self.increment_line();
+            self.advance();
+        } else {
+            self.set_instruction();
+            self.increment_line();
         }
     }
 
-    fn commandType(&self) -> Result<&str, &str> {
-        match self.contents[self.currentLine].as_str() {
-            line if line.starts_with("push") => Ok("C_PUSH"),
-            line if line.starts_with("pop") => Ok("C_POP"),
-            line if ["add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not"].contains(&line) => {
-                Ok("C_ARITHMETIC")
-            }
-            _ => Err("could not match command"),
-        }
+    pub fn commandType(&self) -> Result<&str, &str> {
+        if self.currentInstruction.starts_with("push") {
+            return Ok("C_PUSH");
+        } else if self.currentInstruction.starts_with("pop") {
+            return Ok("C_POP");
+        } else if ["add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not"]
+            .contains(&self.currentInstruction.as_str())
+        {
+            return Ok("C_ARITHMETIC");
+        } else {
+            return Err("could not match command");
+        };
     }
 
-    fn arg1(&self) -> Option<String> {
+    pub fn arg1(&self) -> Option<String> {
         match self.commandType() {
             Ok(cmd) => match cmd {
                 "C_PUSH" | "C_POP" => {
@@ -78,7 +92,7 @@ impl Parser {
         }
     }
 
-    fn arg2(&self) -> Option<String> {
+    pub fn arg2(&self) -> Option<String> {
         match self.commandType() {
             Ok(cmd) => match cmd {
                 "C_PUSH" | "C_POP" | "C_FUNCTION" | "C_CALL" => {
@@ -91,7 +105,6 @@ impl Parser {
         }
     }
 }
-
 pub struct CodeWriter {
     pub output_file: VmFile,
     mem_offset_map: Option<HashMap<MemoryLocation, i16>>,
@@ -99,7 +112,7 @@ pub struct CodeWriter {
 }
 
 impl CodeWriter {
-    pub fn new(file: VmFile, is_test:bool)->Self {
+    pub fn new(file: VmFile, is_test: bool) -> Self {
         if is_test {
             let mem_offset_map: Option<HashMap<MemoryLocation, i16>> = Some(HashMap::from([
                 (MemoryLocation::Constant, 0),
@@ -116,14 +129,14 @@ impl CodeWriter {
                 output_file: file,
                 mem_offset_map,
                 state: 0,
-            }}
-
-            else {
-                return CodeWriter {
-                    output_file: file,
-                    mem_offset_map: None,
-                    state: 0,
-                }};
+            };
+        } else {
+            return CodeWriter {
+                output_file: file,
+                mem_offset_map: None,
+                state: 0,
+            };
+        };
     }
 
     fn write_lines(&mut self, lines: Vec<&str>) -> std::io::Result<()> {
@@ -138,23 +151,33 @@ impl CodeWriter {
 
         let mem_location = match segment {
             "SP" => Ok(self
-                .mem_offset_map.as_ref().unwrap()
+                .mem_offset_map
+                .as_ref()
+                .unwrap()
                 .get(&MemoryLocation::Stack)
                 .expect("wrong key")),
             "LCL" => Ok(self
-                .mem_offset_map.as_ref().unwrap()
+                .mem_offset_map
+                .as_ref()
+                .unwrap()
                 .get(&MemoryLocation::Local)
                 .expect("wrong key")),
             "ARG" => Ok(self
-                .mem_offset_map.as_ref().unwrap()
+                .mem_offset_map
+                .as_ref()
+                .unwrap()
                 .get(&MemoryLocation::Argument)
                 .expect("wrong key")),
             "THIS" => Ok(self
-                .mem_offset_map.as_ref().unwrap()
+                .mem_offset_map
+                .as_ref()
+                .unwrap()
                 .get(&MemoryLocation::This)
                 .expect("wrong key")),
             "THAT" => Ok(self
-                .mem_offset_map.as_ref().unwrap()
+                .mem_offset_map
+                .as_ref()
+                .unwrap()
                 .get(&MemoryLocation::That)
                 .expect("wrong key")),
             _ => Err(()),
@@ -669,8 +692,6 @@ pub enum MemoryLocation {
     Index,
     Stack,
 }
-
-
 
 pub fn parse_filename(configs: &[String]) -> Result<&String, &'static str> {
     if configs.len() == 0 {
