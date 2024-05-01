@@ -24,15 +24,21 @@ mod tests {
         assert!(parser.currentInstruction == "push constant 7");
         assert!(parser.commandType().unwrap() == "C_PUSH");
         assert!(parser.arg1().unwrap() == "constant");
+        assert!(parser.arg2().unwrap() == "7");
 
         parser.advance();
         assert!(parser.currentInstruction == "pop temp 8");
         assert!(parser.commandType().unwrap() == "C_POP");
         assert!(parser.arg1().unwrap() == "temp");
+        assert!(parser.arg2().unwrap() == "8");
 
         parser.advance();
         assert!(parser.currentInstruction == "add");
         assert!(parser.commandType().unwrap() == "C_ARITHMETIC");
         assert!(parser.arg1().unwrap() == "add");
+        assert!(parser.arg2() == None);
     }
+
+    #[test]
+    fn test_code_writer() {}
 }
