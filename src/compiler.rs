@@ -147,8 +147,6 @@ impl CodeWriter {
     }
 
     fn write_address(&mut self, segment: &str) {
-        writeln!(self.output_file.file, "//setting up {} address", segment).unwrap();
-
         let mem_location = match segment {
             "SP" => Ok(self
                 .mem_offset_map
@@ -183,6 +181,7 @@ impl CodeWriter {
             _ => Err(()),
         };
 
+        writeln!(self.output_file.file, "//setting up {} address", segment).unwrap();
         writeln!(self.output_file.file, "@{}", mem_location.unwrap()).unwrap();
         writeln!(self.output_file.file, "D=A").unwrap();
         writeln!(self.output_file.file, "@{}", segment).unwrap();
@@ -190,11 +189,10 @@ impl CodeWriter {
     }
 
     pub fn init_stack(&mut self) {
-        self.write_address("SP");
-        self.write_address("LCL");
-        self.write_address("ARG");
-        self.write_address("THIS");
-        self.write_address("THAT")
+        let fixed_variables = vec!["SP", "LCL", "ARG", "THIS", "THAT"];
+        for var in fixed_variables {
+            self.write_address(var);
+        }
     }
 
     fn write_push_pop(&mut self, command: &str, segment: &str, index: &i16) -> Result<(), &str> {
@@ -714,14 +712,13 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
     if test {
         code_writer.init_stack();
     }
-
+    dbg!(test);
     while parser.hasMoreLines() {
         parser.advance();
 
         dbg!(&parser.currentLine);
         // match on command type
         if let Ok(cmd) = parser.commandType() {
-            dbg!(&parser.arg1());
             match cmd {
                 "C_PUSH" => {
                     code_writer
