@@ -1,5 +1,6 @@
-use hack_vm::compiler::{compile_vm_code, parse_filename, read_lines};
-use hack_vm::compiler::{CodeWriter, Parser, VmFile};
+use hack_vm::code_writer::CodeWriter;
+use hack_vm::compiler::{compile_vm_code, parse_filename, read_lines, VmFile};
+use hack_vm::parser::Parser;
 use std::env;
 use std::path::Path;
 

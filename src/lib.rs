@@ -1,8 +1,11 @@
+pub mod code_writer;
 pub mod compiler;
+pub mod parser;
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::{Parser, VmFile};
+    use crate::compiler::VmFile;
+    use crate::parser::Parser;
     use std::vec;
 
     #[test]
