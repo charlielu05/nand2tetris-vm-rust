@@ -1,5 +1,8 @@
+use serde::de::value::Error;
+
 use crate::compiler::VmFile;
 use std::collections::HashMap;
+use std::io;
 use std::io::ErrorKind;
 use std::io::Write;
 
@@ -442,7 +445,7 @@ impl CodeWriter {
         match command {
             "add" => {
                 self.write_lines(vec![
-                    "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D+M", "M=D",
+                    "//add", "@SP", "M=M-1", "@SP", "A=M", "D=M", "@SP", "A=M-1", "D=D+M", "M=D",
                 ])
                 .expect("error");
                 Ok(())
@@ -590,6 +593,25 @@ impl CodeWriter {
             _ => Err(ErrorKind::InvalidInput),
         }
     }
+
+    pub fn write_label(&mut self, label: &String) -> Result<(), std::io::Error> {
+        self.write_lines(vec!["//label", &format!("({})", label)])
+    }
+
+    pub fn write_ifgoto(&mut self, label: &String) -> Result<(), std::io::Error> {
+        self.write_lines(vec![
+            "//if-goto",
+            "@SP",
+            "M=M-1",
+            &format!("@{}", label),
+            "D;JNE",
+        ])
+    }
+
+    pub fn write_goto(&mut self, label: &String) -> Result<(), std::io::Error> {
+        self.write_lines(vec!["//goto", &format!("@{}", label), "0; JMP"])
+    }
+
     fn close(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.output_file.file.sync_all().map_err(|e| e.into())
     }

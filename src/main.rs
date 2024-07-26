@@ -15,8 +15,16 @@ fn main() {
         std::process::exit(1);
     });
 
+    let file_parent = Path::new(filepath).parent().unwrap().to_str().unwrap();
+    dbg!(file_parent);
+
     let filename = Path::new(filepath).file_stem().unwrap().to_str().unwrap();
-    println!("Creating Virtual Machine bytecode file: {:?}", filename);
+
+    dbg!(format!("{}/{}", file_parent, filename));
+    println!(
+        "Creating Virtual Machine bytecode file: {:?}",
+        format!("{}/{}", file_parent, filename)
+    );
 
     let is_test = matches!(args[2].as_str(), "true");
 
@@ -24,7 +32,7 @@ fn main() {
     let lines = read_lines(filepath);
 
     // initialise the file object
-    let file = VmFile::new(filename).unwrap();
+    let file = VmFile::new(format!("{}/{}", file_parent, filename).as_str()).unwrap();
 
     let parser = Parser::new(lines);
 

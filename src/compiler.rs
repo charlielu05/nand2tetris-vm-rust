@@ -46,11 +46,13 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
     while parser.hasMoreLines() {
         parser.advance();
 
-        dbg!(&parser.currentLine);
+        dbg!(&parser.current_instruction());
+        dbg!(&parser.commandType());
         // match on command type
         if let Ok(cmd) = parser.commandType() {
             match cmd {
                 "C_PUSH" => {
+                    dbg!(cmd);
                     code_writer
                         .write_push_pop(
                             cmd,
@@ -60,6 +62,7 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
                         .expect("error");
                 }
                 "C_POP" => {
+                    dbg!(cmd);
                     code_writer
                         .write_push_pop(
                             cmd,
@@ -68,11 +71,38 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
                         )
                         .expect("error");
                 }
-                "C_ARITHMETIC" => code_writer
-                    .write_arithmetic(&parser.arg1().expect("error"))
-                    .expect("error"),
+                "C_ARITHMETIC" => {
+                    dbg!(cmd);
+                    code_writer
+                        .write_arithmetic(&parser.arg1().expect("error"))
+                        .expect("error");
+                }
+                "C_LABEL" => {
+                    dbg!(cmd);
+                    code_writer
+                        .write_label(&parser.arg1().expect("error"))
+                        .expect("error");
+                }
+                "C_IFGOTO" => {
+                    dbg!(cmd);
+                    code_writer
+                        .write_ifgoto(&parser.arg1().expect("error"))
+                        .expect("error");
+                }
+                "C_GOTO" => {
+                    dbg!(cmd);
+                    code_writer
+                        .write_goto(&parser.arg1().expect("error"))
+                        .expect("error")
+                }
                 _ => {}
             }
+        } else {
+            panic!(
+                "{}: {}",
+                "command not implemented",
+                parser.current_instruction()
+            );
         }
     }
 }

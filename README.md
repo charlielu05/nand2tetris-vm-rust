@@ -1,3 +1,3 @@
 ```
-cargo run test_files/SimpleAdd.vm
+cargo run test_files/SimpleAdd.vm true
 ```
