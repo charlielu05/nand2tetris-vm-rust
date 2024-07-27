@@ -95,6 +95,19 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
                         .write_goto(&parser.arg1().expect("error"))
                         .expect("error")
                 }
+                "C_FUNCTION" => {
+                    dbg!(cmd);
+                    code_writer
+                        .write_function(
+                            &parser.arg1().expect("function name error"),
+                            &parser.arg2().expect("nvars error"),
+                        )
+                        .expect("error")
+                }
+                "C_RETURN" => {
+                    dbg!(cmd);
+                    code_writer.write_return().expect("error")
+                }
                 _ => {}
             }
         } else {

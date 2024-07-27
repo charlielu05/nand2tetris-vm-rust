@@ -612,6 +612,42 @@ impl CodeWriter {
         self.write_lines(vec!["//goto", &format!("@{}", label), "0; JMP"])
     }
 
+    pub fn write_function(
+        &mut self,
+        function_name: &String,
+        nvars: &String,
+    ) -> Result<(), std::io::Error> {
+        self.write_lines(vec!["//function", &format!("@{}", function_name)])?;
+        let mut i = 0;
+        let j: i16 = nvars.parse().expect("error parsing");
+        while i < j {
+            self.write_lines(vec!["//nvars"])?;
+            // push 0 for local variables
+            self.write_push_pop("C_PUSH", "constant", &0).unwrap();
+            i += 1;
+        }
+        Ok(())
+    }
+
+    pub fn write_return(&mut self) -> Result<(), std::io::Error> {
+        // frame = LCL
+        // save LCL address to SP address
+        self.write_lines(vec!["//frame=LCL", "@LCL", "D=M", "@SP", "A=M", "M=D"])?;
+        // pop SP value(LCL address) to R13
+        self.write_lines(vec!["@13", "M=D", "@SP", "M=M-1"])?;
+
+        // retAddr=*(frame-5)
+        // set D=5
+        self.write_lines(vec!["//retAddr=*(frame-5", "@5", "D=A"])?;
+        // D = frame - 5
+        self.write_lines(vec!["//frame-5", "@R13", "D=M-D", "A=D", "D=M"])?;
+        // write D(retAddr) to R14
+        self.write_lines(vec!["@14", "M=D"])?;
+        // pop ARG
+
+        Ok(())
+    }
+
     fn close(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.output_file.file.sync_all().map_err(|e| e.into())
     }

@@ -56,6 +56,10 @@ impl Parser {
             return Ok("C_IFGOTO");
         } else if self.currentInstruction.starts_with("goto") {
             return Ok("C_GOTO");
+        } else if self.currentInstruction.starts_with("function") {
+            return Ok("C_FUNCTION");
+        } else if self.currentInstruction.starts_with("return") {
+            return Ok("C_RETURN");
         } else if ["add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not"]
             .contains(&self.currentInstruction.as_str())
         {
@@ -68,7 +72,7 @@ impl Parser {
     pub fn arg1(&self) -> Option<String> {
         match self.commandType() {
             Ok(cmd) => match cmd {
-                "C_PUSH" | "C_POP" | "C_LABEL" | "C_IFGOTO" | "C_GOTO" => {
+                "C_PUSH" | "C_POP" | "C_LABEL" | "C_IFGOTO" | "C_GOTO" | "C_FUNCTION" => {
                     let parts: Vec<&str> = self.currentInstruction.split_whitespace().collect();
                     Some(parts[1].to_string())
                 }
