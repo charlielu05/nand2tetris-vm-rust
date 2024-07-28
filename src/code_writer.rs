@@ -643,8 +643,69 @@ impl CodeWriter {
         self.write_lines(vec!["//frame-5", "@R13", "D=M-D", "A=D", "D=M"])?;
         // write D(retAddr) to R14
         self.write_lines(vec!["@14", "M=D"])?;
-        // pop ARG
 
+        // pop SP value to ARG
+        self.write_lines(vec![
+            "//arg=pop()",
+            "@SP",
+            "A=M",
+            "D=M",
+            "@ARG",
+            "A=M",
+            "M=D",
+        ])?;
+
+        // SP = ARG+1
+        self.write_lines(vec!["//SP=ARG+1", "@ARG", "D=M", "@SP", "M=D+1"])?;
+
+        // THAT = *(frame-1)
+        self.write_lines(vec![
+            "//THAT=*(frame-1)",
+            "@R13",
+            "A=M-1",
+            "D=M",
+            "@THAT",
+            "M=D",
+        ])?;
+
+        // THIS = *(frame-2)
+        self.write_lines(vec![
+            "//THIS=*(frame-2)",
+            "@2",
+            "D=A",
+            "@R13",
+            "A=M-D",
+            "D=M",
+            "@THIS",
+            "M=D",
+        ])?;
+
+        // ARG = *(frame-3)
+        self.write_lines(vec![
+            "//ARG=*(frame-3)",
+            "@3",
+            "D=A",
+            "@R13",
+            "A=M-D",
+            "D=M",
+            "@ARG",
+            "M=D",
+        ])?;
+
+        // LCL = *(frame-4)
+        self.write_lines(vec![
+            "//LCL=*(frame-4)",
+            "@4",
+            "D=A",
+            "@R13",
+            "A=M-D",
+            "D=M",
+            "@LCL",
+            "M=D",
+        ])?;
+
+        // goto retrAddr
+        self.write_lines(vec!["//goto", "@R14", "A=M", "0; JMP"])?;
         Ok(())
     }
 
