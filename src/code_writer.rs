@@ -62,8 +62,8 @@ impl CodeWriter {
         };
     }
 
-    pub fn set_file_name(&mut self, filename: String) {
-        self.filename = Some(filename)
+    pub fn set_file_name(&mut self, filename: &str) {
+        self.filename = Some(filename.to_string())
     }
 
     fn write_lines(&mut self, lines: Vec<&str>) -> std::io::Result<()> {
@@ -195,7 +195,7 @@ impl CodeWriter {
                 "static" => {
                     self.write_lines(vec![
                         "//push static",
-                        &format!("@{}.{}", &self.output_file.name(), index),
+                        &format!("@{}.{}", &self.filename.clone().unwrap(), index),
                         "D=M",
                         "@SP",
                         "A=M",
@@ -401,7 +401,7 @@ impl CodeWriter {
                         "@SP",
                         "A=M",
                         "D=M",
-                        &format!("@{}.{}", &self.output_file.name(), index),
+                        &format!("@{}.{}", &self.filename.clone().unwrap(), index),
                         "M=D",
                     ])
                     .expect("error");

@@ -73,8 +73,10 @@ fn main() {
         // create new parser for each vm file
         // pass the parser sequentially to the code_writer, also invoking setFilename on the code_writer
         for vm_file in entries {
+            let filename = vm_file.as_path().file_stem();
             let lines = read_lines(vm_file.as_os_str().to_str().unwrap());
             let parser = Parser::new(lines);
+            code_writer.set_file_name(filename.unwrap().to_str().unwrap());
             code_writer = compile_vm_code(parser, code_writer, &is_test);
         }
     }
