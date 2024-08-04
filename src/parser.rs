@@ -60,9 +60,15 @@ impl Parser {
             return Ok("C_FUNCTION");
         } else if self.currentInstruction.starts_with("return") {
             return Ok("C_RETURN");
-        } else if ["add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not"]
-            .contains(&self.currentInstruction.as_str())
-        {
+        } else if self.currentInstruction.starts_with("call") {
+            return Ok("C_CALL");
+        } else if ["add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not"].contains(
+            &self
+                .currentInstruction
+                .split_whitespace()
+                .next()
+                .unwrap_or(""),
+        ) {
             return Ok("C_ARITHMETIC");
         } else {
             return Err("could not match command");
@@ -72,11 +78,18 @@ impl Parser {
     pub fn arg1(&self) -> Option<String> {
         match self.commandType() {
             Ok(cmd) => match cmd {
-                "C_PUSH" | "C_POP" | "C_LABEL" | "C_IFGOTO" | "C_GOTO" | "C_FUNCTION" => {
+                "C_PUSH" | "C_POP" | "C_LABEL" | "C_IFGOTO" | "C_GOTO" | "C_FUNCTION"
+                | "C_CALL" => {
                     let parts: Vec<&str> = self.currentInstruction.split_whitespace().collect();
                     Some(parts[1].to_string())
                 }
-                "C_ARITHMETIC" => Some(self.currentInstruction.to_string()),
+                "C_ARITHMETIC" => Some(
+                    self.currentInstruction
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or("")
+                        .to_string(),
+                ),
                 _ => None,
             },
             Err(_) => None,

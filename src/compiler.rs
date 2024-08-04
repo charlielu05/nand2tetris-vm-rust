@@ -37,9 +37,9 @@ pub fn read_lines(filename: &str) -> Vec<String> {
         .collect()
 }
 
-pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bool) {
+pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: &bool) -> CodeWriter {
     // initialize the memory base address if we are testing/debugging
-    if test {
+    if *test {
         code_writer.init_stack();
     }
     dbg!(test);
@@ -108,6 +108,15 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
                     dbg!(cmd);
                     code_writer.write_return().expect("error")
                 }
+                "C_CALL" => {
+                    dbg!(cmd);
+                    code_writer
+                        .write_call(
+                            &parser.arg1().expect("error"),
+                            &parser.arg2().expect("error"),
+                        )
+                        .expect("error")
+                }
                 _ => {}
             }
         } else {
@@ -118,4 +127,6 @@ pub fn compile_vm_code(mut parser: Parser, mut code_writer: CodeWriter, test: bo
             );
         }
     }
+
+    code_writer
 }

@@ -21,6 +21,8 @@ pub enum MemoryLocation {
 
 pub struct CodeWriter {
     pub output_file: VmFile,
+    filename: Option<String>,
+    label_number: i16,
     mem_offset_map: Option<HashMap<MemoryLocation, i16>>,
     pub state: i16,
 }
@@ -41,22 +43,42 @@ impl CodeWriter {
             ]));
             return CodeWriter {
                 output_file: file,
+                label_number: 0,
+                filename: None,
                 mem_offset_map,
                 state: 0,
             };
         } else {
-            return CodeWriter {
+            let mut code_writer = CodeWriter {
                 output_file: file,
+                label_number: 0,
+                filename: None,
                 mem_offset_map: None,
                 state: 0,
             };
+            code_writer.write_bootstrap().unwrap();
+
+            return code_writer;
         };
+    }
+
+    pub fn set_file_name(&mut self, filename: String) {
+        self.filename = Some(filename)
     }
 
     fn write_lines(&mut self, lines: Vec<&str>) -> std::io::Result<()> {
         for line in lines {
             writeln!(self.output_file.file, "{}", line)?;
         }
+        Ok(())
+    }
+
+    fn write_bootstrap(&mut self) -> std::io::Result<()> {
+        // set stack pointer value to 256
+        self.write_lines(vec!["@256", "D=A", "@0", "M=D"])?;
+
+        // call Sys.init function
+        self.write_call(&String::from("Sys.init"), &String::from("0"))?;
         Ok(())
     }
 
@@ -602,7 +624,8 @@ impl CodeWriter {
         self.write_lines(vec![
             "//if-goto",
             "@SP",
-            "M=M-1",
+            "AM=M-1",
+            "D=M",
             &format!("@{}", label),
             "D;JNE",
         ])
@@ -617,7 +640,8 @@ impl CodeWriter {
         function_name: &String,
         nvars: &String,
     ) -> Result<(), std::io::Error> {
-        self.write_lines(vec!["//function", &format!("@{}", function_name)])?;
+        self.write_lines(vec!["//function"])?;
+        self.write_label(function_name).unwrap();
         let mut i = 0;
         let j: i16 = nvars.parse().expect("error parsing");
         while i < j {
@@ -626,6 +650,70 @@ impl CodeWriter {
             self.write_push_pop("C_PUSH", "constant", &0).unwrap();
             i += 1;
         }
+        Ok(())
+    }
+
+    fn finish_push(&mut self) -> Result<(), std::io::Error> {
+        // finishes push to stack
+        self.write_lines(vec!["@SP", "A=M", "M=D", "@SP", "M=M+1"])
+    }
+
+    pub fn write_call(
+        &mut self,
+        function_name: &String,
+        nargs: &String,
+    ) -> Result<(), std::io::Error> {
+        let return_address = format!("{}$ret.{}", function_name, &self.label_number);
+
+        // push returnAddr, this should be functionName$ret.i
+        self.write_lines(vec![
+            "//push returnAddr",
+            &format!("@{}", &return_address),
+            "D=A",
+        ])?;
+        self.finish_push().expect("error finish push");
+
+        // push LCL
+        self.write_lines(vec!["//push lcl", "@LCL", "D=M"])?;
+        self.finish_push().expect("error finish push");
+
+        // push ARG
+        self.write_lines(vec!["//push arg", "@ARG", "D=M"])?;
+        self.finish_push().expect("error finish push");
+
+        // push THIS
+        self.write_lines(vec!["//push this", "@THIS", "D=M"])?;
+        self.finish_push().expect("error finish push");
+
+        // push THAT
+        self.write_lines(vec!["//push that", "@THAT", "D=M"])?;
+        self.finish_push().expect("error finish push");
+
+        // ARG = SP - 5 - nArgs
+        self.write_lines(vec![
+            "//arg=sp-5-nargs",
+            "@SP",
+            "D=M",
+            "@5",
+            "D=D-A",
+            &format!("@{}", nargs),
+            "D=D-A",
+            "@ARG",
+            "M=D",
+        ])?;
+
+        // LCL = SP
+        self.write_lines(vec!["//lcl=sp", "@SP", "D=M", "@LCL", "M=D"])?;
+
+        // goto f
+        self.write_goto(function_name).expect("error");
+
+        // (returnAddress)
+        self.write_label(&return_address).expect("error");
+
+        // increment label number
+        self.label_number += 1;
+
         Ok(())
     }
 

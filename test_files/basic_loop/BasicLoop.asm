@@ -141,7 +141,8 @@ M=D
 M=M+1
 //if-goto
 @SP
-M=M-1
+AM=M-1
+D=M
 @LOOP_START
 D;JNE
 //push local
